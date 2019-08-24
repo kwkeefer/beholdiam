@@ -10,7 +10,7 @@ class Athena():
     def __init__(self, metadata):
         self.metadata = metadata
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
-        self.output_bucket = metadata['output_bucket']
+        self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
         self.queries = metadata['queries']
         self.create_client()
@@ -18,15 +18,15 @@ class Athena():
     def create_client(self):
         self.client = boto3.client('athena', region_name=self.region)
 
-    def start_query_execution(self, query_string_path_tuple):
+    def start_query_execution(self, query_string, path):
         response = self.client.start_query_execution(
-            QueryString = query_string_path_tuple[0],
+            QueryString = query_string,
             ResultConfiguration={
-                "OutputLocation": f"s3://{self.output_bucket}/{query_string_path_tuple[1]}"
+                "OutputLocation": f"s3://{self.behold_bucket}/{path}"
             }
         )
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-            logger.info(f"QueryExecutionId: {response['QueryExecutionId']}")
+            return response['QueryExecutionId']
         else:
             logger.error(f"Response failed:\n{response}")
 
@@ -35,18 +35,18 @@ class Athena():
             years = self.metadata['years_to_partition']
         else:
             years = [datetime.now().year]
-        self.start_query_execution(athena_query_strings.create_table(self.cloudtrail_bucket))
+        query_string, path = athena_query_strings.create_table(self.cloudtrail_bucket)
+        self.start_query_execution(query_string, path)
         for account in self.metadata['accounts_to_partition']:
             for region in self.metadata['regions_to_partition']:
                 for year in years:
-                    self.start_query_execution(
-                        athena_query_strings.add_to_partition(
+                    query_string, path = athena_query_strings.add_to_partition(
                             cloudtrail_bucket=self.cloudtrail_bucket,
                             account=account,
                             region=region,
                             year=year
                         )
-                    )
+                    self.start_query_execution(query_string, path)
 
     def active_roles_query(self):
         try:
@@ -59,12 +59,11 @@ class Athena():
             days_back = 7
 
         for account in accounts:
-            self.start_query_execution(
-                athena_query_strings.active_roles(
+            query_string, path = athena_query_strings.active_roles(
                     account=account,
                     days_back=days_back
                 )
-            )
+            self.start_query_execution(query_string, path)
 
     def active_users_query(self):
         try:
@@ -77,12 +76,11 @@ class Athena():
             days_back = 7
 
         for account in accounts:
-            self.start_query_execution(
-                athena_query_strings.active_users(
+            query_string, path = athena_query_strings.active_users(
                     account=account,
                     days_back=days_back
                 )
-            )
+            self.start_query_execution(query_string, path)
 
     def services_by_role_query(self):
         logger.info(self.queries['services_by_role'])
