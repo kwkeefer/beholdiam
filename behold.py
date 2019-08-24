@@ -11,15 +11,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger("main")
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument("--metadata")
+parser.add_argument("metadata")
+parser.add_argument("--setup", action="store_true")
 args = parser.parse_args()
 
 meta = metadata.read(args.metadata)
-athena_obj = Athena(meta)
-#athena_obj.create_athena_table()
 
-iam_obj = IAM(meta)
-iam_obj.get_all_roles()
-print(iam_obj.role_arns)
+athena = Athena(meta)
+if args.setup:
+    athena.set_up_table_and_patitions()
+athena.parse_queries()
+
+iam = IAM(meta)
+iam.get_all_roles()
+print(iam.role_arns)
