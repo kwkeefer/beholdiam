@@ -67,15 +67,17 @@ def add_to_partition(cloudtrail_bucket, account, region, year):
 
 
 def active_roles(account, days_back):
+    logger.info(f"Running active_roles: {account} | {days_back} days back.")
     query_string = f"""SELECT DISTINCT useridentity.sessioncontext.sessionissuer.arn
         FROM cloudtrail_logs
-        account = '{account}'
+        WHERE account = '{account}'
         AND useridentity.type = 'AssumedRole'
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now());"""
     return (query_string, f"results/active_roles/{account}")
 
 
 def active_users(account, days_back):
+    logger.info(f"Running active_users: {account} | {days_back} days back.")
     query_string = f"""SELECT DISTINCT useridentity.arn
         FROM cloudtrail_logs
         WHERE account = '{account}'

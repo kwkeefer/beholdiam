@@ -54,7 +54,7 @@ class Athena():
         except KeyError:
             accounts = self.metadata['accounts_to_partition']
         try:
-            days_back = [self.queries['active_roles']['days_back']]
+            days_back = self.queries['active_roles']['days_back']
         except KeyError:
             days_back = 7
 
@@ -72,7 +72,7 @@ class Athena():
         except KeyError:
             accounts = self.metadata['accounts_to_partition']
         try:
-            days_back = [self.queries['active_users']['days_back']]
+            days_back = self.queries['active_users']['days_back']
         except KeyError:
             days_back = 7
 
