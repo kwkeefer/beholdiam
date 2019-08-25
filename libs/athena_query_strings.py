@@ -93,13 +93,15 @@ def services_by_role(account, days_back, role_arn):
         AND (useridentity.sessioncontext.sessionissuer.arn = '{role_arn}')
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())
         ORDER BY eventsource, eventname;"""
-    return (query_string, f"results/services_by_role/{account}/{role_arn}")
+    role_name = role_arn.split('/')[1]
+    return (query_string, f"results/services_by_role/{account}/{role_name}")
 
 
-def services_by_user(account, user_arn, days_back):
+def services_by_user(account, days_back, user_arn):
     query_string = f"""SELECT DISTINCT eventsource, eventname FROM cloudtrail_logs 
         WHERE account = '{account}' 
         AND (useridentity.arn = '{user_arn}') 
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())
         ORDER BY eventsource, eventname;"""
-    return (query_string, f"results/services_by_user/{account}/{user_arn}")
+    user_name = user_arn.split('/')[1]
+    return (query_string, f"results/services_by_user/{account}/{user_name}")
