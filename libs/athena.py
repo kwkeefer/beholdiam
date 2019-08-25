@@ -8,12 +8,22 @@ logger = logging.getLogger(__name__)
 
 class Athena():
     def __init__(self, metadata):
+        try:
+            self.days_back = metadata['days_back']
+        except KeyError:
+            self.days_back = 30
         self.metadata = metadata
+        self.accounts = self.metadata['accounts_to_partition']
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
-        self.queries = metadata['queries']
         self.create_client()
+
+    def active_resources(self):
+        self.active_roles_output_files = []
+        self.active_users_output_files = []
+        self.active_roles_query()
+        self.active_users_query()
 
     def create_client(self):
         self.client = boto3.client('athena', region_name=self.region)
@@ -49,54 +59,59 @@ class Athena():
                     self.start_query_execution(query_string, path)
 
     def active_roles_query(self):
-        try:
-            accounts = [self.queries['active_roles']['account']]
-        except KeyError:
-            accounts = self.metadata['accounts_to_partition']
-        try:
-            days_back = self.queries['active_roles']['days_back']
-        except KeyError:
-            days_back = 7
-
-        for account in accounts:
+        for account in self.accounts:
             query_string, path = athena_query_strings.active_roles(
                     account=account,
-                    days_back=days_back
+                    days_back=self.days_back
                 )
-            self.start_query_execution(query_string, path)
+            execution_id = self.start_query_execution(query_string, path)
+            output_dict = {
+                "account": account,
+                "path": f"{path}/{execution_id}.csv"
+            }
+            self.active_roles_output_files.append(output_dict)
 
     def active_users_query(self):
-        try:
-            accounts = [self.queries['active_users']['account']]
-        except KeyError:
-            accounts = self.metadata['accounts_to_partition']
-        try:
-            days_back = self.queries['active_users']['days_back']
-        except KeyError:
-            days_back = 7
-
-        for account in accounts:
+        for account in self.accounts:
             query_string, path = athena_query_strings.active_users(
                     account=account,
-                    days_back=days_back
+                    days_back=self.days_back
                 )
-            self.start_query_execution(query_string, path)
+            execution_id = self.start_query_execution(query_string, path)
+            output_dict = {
+                "account": account,
+                "path": f"{path}/{execution_id}.csv"
+            }
+            self.active_users_output_files.append(output_dict)
 
-    def services_by_role_query(self):
-        logger.info(self.queries['services_by_role'])
+    def services_by_role_query(self, account, roles):
+        self.services_by_role_output_files = []
+        for role in roles:
+            query_string, path = athena_query_strings.services_by_role(
+                account=account,
+                days_back=self.days_back,
+                role_arn=role
+            )
+            execution_id = self.start_query_execution(query_string, path)
+            output_dict = {
+                "account": account,
+                "role": role,
+                "path": f"{path}/{execution_id}.csv"
+            }
+            self.services_by_role_output_files.append(output_dict)
 
-    def services_by_user_query(self):
-        pass
-
-    def parse_queries(self):
-        for query in self.queries:
-            if query == 'active_roles':
-                self.active_roles_query()
-            elif query == 'active_users':
-                self.active_users_query()
-            elif query == 'services_by_role':
-                self.services_by_role_query()
-            elif query == 'services_by_user':
-                self.services_by_user_query()
-            else:
-                logger.error("No valid queries found in metadata.")
+    def services_by_user_query(self, account, users):
+        self.services_by_user_output_files = []
+        for user in users:
+            query_string, path = athena_query_strings.services_by_user(
+                account=account,
+                user_arn=user,
+                days_back=self.days_back
+            )
+            execution_id = self.start_query_execution(query_string, path)
+            output_dict = {
+                "account": account,
+                "user": user,
+                "path": f"{path}/{execution_id}.csv"
+            }
+            self.services_by_user_output_files.append(output_dict)
