@@ -86,32 +86,38 @@ class Athena():
 
     def services_by_role_query(self, account, roles):
         self.services_by_role_output_files = []
-        for role in roles:
+        for role_arn in roles:
+            role_name = role_arn.split('/')[1]
             query_string, path = athena_query_strings.services_by_role(
                 account=account,
                 days_back=self.days_back,
-                role_arn=role
+                role_arn=role_arn,
+                role_name=role_name
             )
             execution_id = self.start_query_execution(query_string, path)
             output_dict = {
                 "account": account,
-                "role": role,
+                "role_arn": role_arn,
+                "role_name": role_name,
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_role_output_files.append(output_dict)
 
     def services_by_user_query(self, account, users):
         self.services_by_user_output_files = []
-        for user in users:
+        for user_arn in users:
+            user_name = user_arn.split('/')[1]
             query_string, path = athena_query_strings.services_by_user(
                 account=account,
-                user_arn=user,
+                user_arn=user_arn,
+                user_name=user_name,
                 days_back=self.days_back
             )
             execution_id = self.start_query_execution(query_string, path)
             output_dict = {
                 "account": account,
-                "user": user,
+                "user_arn": user_arn,
+                "user_name": user_name,
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_user_output_files.append(output_dict)

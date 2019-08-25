@@ -3,6 +3,7 @@ from libs.athena import Athena
 from libs.iam import IAM
 from libs.s3 import S3
 from libs.csv_parser import CSVParser
+from libs.policy_generator import PolicyGenerator
 import argparse
 import logging
 import time
@@ -23,14 +24,12 @@ meta = metadata.read(args.metadata)
 s3 = S3(meta)
 athena = Athena(meta)
 csv = CSVParser()
+policygen = PolicyGenerator()
 
 if args.setup:
     athena.set_up_table_and_patitions()
 
 athena.active_resources()
-
-logger.info(athena.active_roles_output_files)
-logger.info(athena.active_users_output_files)
 
 for dictionary in athena.active_roles_output_files:
     obj = s3.get_object(meta['behold_bucket'], dictionary['path'])
@@ -40,7 +39,22 @@ for dictionary in athena.active_roles_output_files:
         roles=roles_list
     )
 
-logger.info(athena.services_by_role_output_files)
+for dictionary in athena.services_by_role_output_files:
+    obj = s3.get_object(meta['behold_bucket'], dictionary['path'])
+    list_of_dicts = csv.csv_to_list_of_dicts(obj)
+    actions = policygen.generate_list_of_actions(list_of_dicts)
+    formatted_actions = policygen.format_actions(actions)
+    s3.put_object(
+        bucket=meta['behold_bucket'],
+        key=f"behold_results/{dictionary['account']}/roles/{dictionary['role_name']}.txt",
+        encoded_object=formatted_actions.encode()
+    )
+    policy = policygen.build_policy(actions)
+    s3.put_object(
+        bucket=meta['behold_bucket'],
+        key=f"behold_results/{dictionary['account']}/roles/{dictionary['role_name']}.json",
+        encoded_object=policy.encode()
+    )    
 
 for dictionary in athena.active_users_output_files:
     obj = s3.get_object(meta['behold_bucket'], dictionary['path'])
@@ -50,4 +64,20 @@ for dictionary in athena.active_users_output_files:
         users=users_list
     )
 
-logger.info(athena.services_by_user_output_files)
+for dictionary in athena.services_by_user_output_files:
+    obj = s3.get_object(meta['behold_bucket'], dictionary['path'])
+    list_of_dicts = csv.csv_to_list_of_dicts(obj)
+    actions = policygen.generate_list_of_actions(list_of_dicts)
+    formatted_actions = policygen.format_actions(actions)
+    s3.put_object(
+        bucket=meta['behold_bucket'],
+        key=f"behold_results/{dictionary['account']}/users/{dictionary['user_name']}.txt",
+        encoded_object=formatted_actions.encode()
+    )
+    policy = policygen.build_policy(actions)
+    s3.put_object(
+        bucket=meta['behold_bucket'],
+        key=f"behold_results/{dictionary['account']}/users/{dictionary['user_name']}.json",
+        encoded_object=policy.encode()
+    )
+

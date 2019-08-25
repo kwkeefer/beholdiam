@@ -3,7 +3,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 def create_table(bucketname):
-    logger.info(f"Creating Athena table from CloudTrail bucket {bucketname}")
     query_string = f"""CREATE EXTERNAL TABLE cloudtrail_logs (
             eventversion STRING,
             useridentity STRUCT<
@@ -59,7 +58,6 @@ def create_table(bucketname):
 
 
 def add_to_partition(cloudtrail_bucket, account, region, year):
-    logger.info(f"Adding to partition: {account} | {region} | {year}")
     query_string = f"""ALTER TABLE cloudtrail_logs 
         ADD PARTITION (account='{account}', region='{region}', year='{year}') 
         LOCATION 's3://{cloudtrail_bucket}/AWSLogs/{account}/CloudTrail/{region}/{year}/';"""
@@ -67,41 +65,37 @@ def add_to_partition(cloudtrail_bucket, account, region, year):
 
 
 def active_roles(account, days_back):
-    logger.info(f"Running active_roles: {account} | {days_back} days back.")
     query_string = f"""SELECT DISTINCT useridentity.sessioncontext.sessionissuer.arn
         FROM cloudtrail_logs
         WHERE account = '{account}'
         AND useridentity.type = 'AssumedRole'
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now());"""
-    return (query_string, f"results/active_roles/{account}")
+    return (query_string, f"athena_results/active_roles/{account}")
 
 
 def active_users(account, days_back):
-    logger.info(f"Running active_users: {account} | {days_back} days back.")
     query_string = f"""SELECT DISTINCT useridentity.arn
         FROM cloudtrail_logs
         WHERE account = '{account}'
         AND useridentity.type = 'IAMUser'
         AND useridentity.arn IS NOT NULL
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now());"""
-    return (query_string, f"results/active_users/{account}")
+    return (query_string, f"athena_results/active_users/{account}")
 
 
-def services_by_role(account, days_back, role_arn):
+def services_by_role(account, days_back, role_arn, role_name):
     query_string = f"""SELECT DISTINCT eventsource, eventname FROM cloudtrail_logs
         WHERE account = '{account}'
         AND (useridentity.sessioncontext.sessionissuer.arn = '{role_arn}')
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())
         ORDER BY eventsource, eventname;"""
-    role_name = role_arn.split('/')[1]
-    return (query_string, f"results/services_by_role/{account}/{role_name}")
+    return (query_string, f"athena_results/services_by_role/{account}/{role_name}")
 
 
-def services_by_user(account, days_back, user_arn):
+def services_by_user(account, days_back, user_arn, user_name):
     query_string = f"""SELECT DISTINCT eventsource, eventname FROM cloudtrail_logs 
         WHERE account = '{account}' 
         AND (useridentity.arn = '{user_arn}') 
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())
         ORDER BY eventsource, eventname;"""
-    user_name = user_arn.split('/')[1]
-    return (query_string, f"results/services_by_user/{account}/{user_name}")
+    return (query_string, f"athena_results/services_by_user/{account}/{user_name}")
