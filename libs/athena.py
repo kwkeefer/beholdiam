@@ -41,6 +41,7 @@ class Athena():
             logger.error(f"Response failed:\n{response}")
 
     def set_up_table_and_patitions(self):
+        logger.info("Setting up Athena table.")
         if 'years_to_partition' in self.metadata:
             years = self.metadata['years_to_partition']
         else:
@@ -50,6 +51,7 @@ class Athena():
         for account in self.metadata['accounts_to_partition']:
             for region in self.metadata['regions_to_partition']:
                 for year in years:
+                    logger.info(f"Adding partition to Athena table: {account} | {region} | {year}")
                     query_string, path = athena_query_strings.add_to_partition(
                             cloudtrail_bucket=self.cloudtrail_bucket,
                             account=account,
@@ -60,6 +62,7 @@ class Athena():
 
     def active_roles_query(self):
         for account in self.accounts:
+            logger.info(f"Querying Athena for active roles in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_roles(
                     account=account,
                     days_back=self.days_back
@@ -73,6 +76,7 @@ class Athena():
 
     def active_users_query(self):
         for account in self.accounts:
+            logger.info(f"Querying Athena for active users in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_users(
                     account=account,
                     days_back=self.days_back
@@ -85,6 +89,7 @@ class Athena():
             self.active_users_output_files.append(output_dict)
 
     def services_by_role_query(self, account, roles):
+        logger.info(f"Querying Athena for services used by role in {account}.")
         self.services_by_role_output_files = []
         for role_arn in roles:
             role_name = role_arn.split('/')[1]
@@ -104,6 +109,7 @@ class Athena():
             self.services_by_role_output_files.append(output_dict)
 
     def services_by_user_query(self, account, users):
+        logger.info(f"Querying Athena for services used by user in {account}")
         self.services_by_user_output_files = []
         for user_arn in users:
             user_name = user_arn.split('/')[1]
