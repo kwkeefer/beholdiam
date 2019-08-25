@@ -33,3 +33,11 @@ class S3():
             Key=key
         )
         return obj['Body'].read().decode()
+
+    def put_object(self, bucket, key, encoded_object):
+        logger.info(f"Uploading {key} to {bucket}.")
+        self.client.put_object(
+            Body=encoded_object,
+            Bucket=bucket,
+            Key=key
+        )

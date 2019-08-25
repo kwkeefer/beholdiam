@@ -20,7 +20,7 @@ class CSVParser():
         """ Takes a CSV string.  Creates a list of dictionaries by
         using the headers of the CSV as keys, and the values in each row as values. """
 
-        reader = csv.DictReader(string)
+        reader = csv.DictReader(string.splitlines())
         list_of_dicts = []
         for row in reader:
             list_of_dicts.append(dict(row))

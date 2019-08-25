@@ -41,6 +41,7 @@ class Athena():
             logger.error(f"Response failed:\n{response}")
 
     def set_up_table_and_patitions(self):
+        logger.info("Setting up Athena table.")
         if 'years_to_partition' in self.metadata:
             years = self.metadata['years_to_partition']
         else:
@@ -50,6 +51,7 @@ class Athena():
         for account in self.metadata['accounts_to_partition']:
             for region in self.metadata['regions_to_partition']:
                 for year in years:
+                    logger.info(f"Adding partition to Athena table: {account} | {region} | {year}")
                     query_string, path = athena_query_strings.add_to_partition(
                             cloudtrail_bucket=self.cloudtrail_bucket,
                             account=account,
@@ -60,6 +62,7 @@ class Athena():
 
     def active_roles_query(self):
         for account in self.accounts:
+            logger.info(f"Querying Athena for active roles in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_roles(
                     account=account,
                     days_back=self.days_back
@@ -73,6 +76,7 @@ class Athena():
 
     def active_users_query(self):
         for account in self.accounts:
+            logger.info(f"Querying Athena for active users in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_users(
                     account=account,
                     days_back=self.days_back
@@ -85,33 +89,41 @@ class Athena():
             self.active_users_output_files.append(output_dict)
 
     def services_by_role_query(self, account, roles):
+        logger.info(f"Querying Athena for services used by role in {account}.")
         self.services_by_role_output_files = []
-        for role in roles:
+        for role_arn in roles:
+            role_name = role_arn.split('/')[1]
             query_string, path = athena_query_strings.services_by_role(
                 account=account,
                 days_back=self.days_back,
-                role_arn=role
+                role_arn=role_arn,
+                role_name=role_name
             )
             execution_id = self.start_query_execution(query_string, path)
             output_dict = {
                 "account": account,
-                "role": role,
+                "role_arn": role_arn,
+                "role_name": role_name,
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_role_output_files.append(output_dict)
 
     def services_by_user_query(self, account, users):
+        logger.info(f"Querying Athena for services used by user in {account}")
         self.services_by_user_output_files = []
-        for user in users:
+        for user_arn in users:
+            user_name = user_arn.split('/')[1]
             query_string, path = athena_query_strings.services_by_user(
                 account=account,
-                user_arn=user,
+                user_arn=user_arn,
+                user_name=user_name,
                 days_back=self.days_back
             )
             execution_id = self.start_query_execution(query_string, path)
             output_dict = {
                 "account": account,
-                "user": user,
+                "user_arn": user_arn,
+                "user_name": user_name,
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_user_output_files.append(output_dict)
