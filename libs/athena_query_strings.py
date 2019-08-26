@@ -54,8 +54,8 @@ def create_table(bucketname):
 
 
 def add_to_partition(cloudtrail_bucket, account, region, year):
-    query_string = f"""ALTER TABLE behold 
-        ADD PARTITION (account='{account}', region='{region}', year='{year}') 
+    query_string = f"""ALTER TABLE behold
+        ADD PARTITION (account='{account}', region='{region}', year='{year}')
         LOCATION 's3://{cloudtrail_bucket}/AWSLogs/{account}/CloudTrail/{region}/{year}/';"""
     return (query_string, f"setup/add_to_partition/{account}-{region}-{year}")
 
@@ -89,9 +89,9 @@ def services_by_role(account, days_back, role_arn, role_name):
 
 
 def services_by_user(account, days_back, user_arn, user_name):
-    query_string = f"""SELECT DISTINCT eventsource, eventname FROM behold 
-        WHERE account = '{account}' 
-        AND (useridentity.arn = '{user_arn}') 
+    query_string = f"""SELECT DISTINCT eventsource, eventname FROM behold
+        WHERE account = '{account}'
+        AND (useridentity.arn = '{user_arn}')
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())
         ORDER BY eventsource, eventname;"""
     return (query_string, f"athena_results/services_by_user/{account}/{user_name}")
