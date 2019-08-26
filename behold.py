@@ -52,6 +52,7 @@ def get_arns_from_athena_output(users_or_roles):
             list_of_arns=list_of_arns
         )
 
+
 def build_behold_output_files(users_or_roles):
     if users_or_roles == "users":
         athena_services_by_output_files = athena.services_by_user_output_files
@@ -73,7 +74,8 @@ def build_behold_output_files(users_or_roles):
             bucket=meta['behold_bucket'],
             key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.json",
             encoded_object=policy.encode()
-        )    
+        )
+
 
 get_arns_from_athena_output("users")
 get_arns_from_athena_output("roles")

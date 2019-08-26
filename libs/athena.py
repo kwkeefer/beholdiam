@@ -30,7 +30,7 @@ class Athena():
 
     def start_query_execution(self, query_string, path):
         response = self.client.start_query_execution(
-            QueryString = query_string,
+            QueryString=query_string,
             ResultConfiguration={
                 "OutputLocation": f"s3://{self.behold_bucket}/{path}"
             }
@@ -46,27 +46,28 @@ class Athena():
             years = self.metadata['years_to_partition']
         else:
             years = [datetime.now().year]
-        query_string, path = athena_query_strings.create_table(self.cloudtrail_bucket)
+        query_string, path = athena_query_strings.create_table(
+            self.cloudtrail_bucket)
         self.start_query_execution(query_string, path)
         for account in self.metadata['accounts_to_partition']:
             for region in self.metadata['regions_to_partition']:
                 for year in years:
                     logger.info(f"Adding partition to Athena table: {account} | {region} | {year}")
                     query_string, path = athena_query_strings.add_to_partition(
-                            cloudtrail_bucket=self.cloudtrail_bucket,
-                            account=account,
-                            region=region,
-                            year=year
-                        )
+                        cloudtrail_bucket=self.cloudtrail_bucket,
+                        account=account,
+                        region=region,
+                        year=year
+                    )
                     self.start_query_execution(query_string, path)
 
     def active_roles_query(self):
         for account in self.accounts:
             logger.info(f"Querying Athena for active roles in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_roles(
-                    account=account,
-                    days_back=self.days_back
-                )
+                account=account,
+                days_back=self.days_back
+            )
             execution_id = self.start_query_execution(query_string, path)
             output_dict = {
                 "account": account,
@@ -78,9 +79,9 @@ class Athena():
         for account in self.accounts:
             logger.info(f"Querying Athena for active users in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_users(
-                    account=account,
-                    days_back=self.days_back
-                )
+                account=account,
+                days_back=self.days_back
+            )
             execution_id = self.start_query_execution(query_string, path)
             output_dict = {
                 "account": account,
