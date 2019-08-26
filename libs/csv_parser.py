@@ -1,5 +1,4 @@
 import csv
-import json
 
 class CSVParser():
     def __init__(self):

@@ -2,7 +2,6 @@ import boto3
 import logging
 from datetime import datetime
 from . import athena_query_strings
-from .iam import IAM
 
 logger = logging.getLogger(__name__)
 

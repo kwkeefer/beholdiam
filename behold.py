@@ -1,12 +1,10 @@
 from libs import metadata
 from libs.athena import Athena
-from libs.iam import IAM
 from libs.s3 import S3
 from libs.csv_parser import CSVParser
 from libs.policy_generator import PolicyGenerator
 import argparse
 import logging
-import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("metadata")
