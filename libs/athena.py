@@ -5,6 +5,7 @@ from . import athena_query_strings
 
 logger = logging.getLogger(__name__)
 
+
 class Athena():
     def __init__(self, metadata):
         try:

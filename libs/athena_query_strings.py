@@ -1,7 +1,3 @@
-import logging
-
-logger = logging.getLogger(__name__)
-
 def create_table(bucketname):
     query_string = f"""CREATE EXTERNAL TABLE behold (
             eventversion STRING,

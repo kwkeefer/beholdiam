@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class PolicyGenerator():
     def __init__(self):
         pass
@@ -24,7 +25,6 @@ class PolicyGenerator():
         return formatted_actions
 
     def build_policy(self, list_of_actions):
-        
         policy = {
             "Version": "2012-10-17",
             "Statement": [

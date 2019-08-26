@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class S3():
     def __init__(self, metadata):
         self.region = metadata['region']
