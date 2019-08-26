@@ -88,10 +88,10 @@ class Athena():
             }
             self.active_users_output_files.append(output_dict)
 
-    def services_by_role_query(self, account, roles):
+    def services_by_role_query(self, account, list_of_arns):
         logger.info(f"Querying Athena for services used by role in {account}.")
         self.services_by_role_output_files = []
-        for role_arn in roles:
+        for role_arn in list_of_arns:
             role_name = role_arn.split('/')[1]
             query_string, path = athena_query_strings.services_by_role(
                 account=account,
@@ -103,15 +103,15 @@ class Athena():
             output_dict = {
                 "account": account,
                 "role_arn": role_arn,
-                "role_name": role_name,
+                "name": role_name,
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_role_output_files.append(output_dict)
 
-    def services_by_user_query(self, account, users):
+    def services_by_user_query(self, account, list_of_arns):
         logger.info(f"Querying Athena for services used by user in {account}")
         self.services_by_user_output_files = []
-        for user_arn in users:
+        for user_arn in list_of_arns:
             user_name = user_arn.split('/')[1]
             query_string, path = athena_query_strings.services_by_user(
                 account=account,
@@ -123,7 +123,7 @@ class Athena():
             output_dict = {
                 "account": account,
                 "user_arn": user_arn,
-                "user_name": user_name,
+                "name": user_name,
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_user_output_files.append(output_dict)
