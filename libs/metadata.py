@@ -27,15 +27,15 @@ def read(filename):
 def validate_metadata(metadata):
     """ Ensuring required values are set. """
     if 'region' not in metadata:
-        sys.exit("'region' must be included in metadata file.\n" + \
-                 "'region' specifies the region in which to create the Athena table.\n" + \
+        sys.exit("'region' must be included in metadata file.\n" +
+                 "'region' specifies the region in which to create the Athena table.\n" +
                  "'region' should be in the same region as your CloudTrail bucket.")
     elif 'cloudtrail_bucket' not in metadata:
-        sys.exit("'cloudtrail_bucket' must be included in metadata file.\n" + \
+        sys.exit("'cloudtrail_bucket' must be included in metadata file.\n" +
                  "'cloudtrail_bucket' specifies the name of your CloudTrail bucket.")
     elif 'behold_bucket' not in metadata:
-        sys.exit("'behold_bucket' must be included in metadata file.\n" + \
-                 "'behold_bucket' specifies the bucket that behold will store its output files.\n" + \
+        sys.exit("'behold_bucket' must be included in metadata file.\n" +
+                 "'behold_bucket' specifies the bucket that behold will store its output files.\n" +
                  "'behold_bucket' should be in the same region as your CloudTrail bucket.")
 
 
