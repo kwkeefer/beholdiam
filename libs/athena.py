@@ -1,6 +1,5 @@
 import boto3
 import logging
-from datetime import datetime
 from . import athena_query_strings
 
 logger = logging.getLogger(__name__)
@@ -8,10 +7,6 @@ logger = logging.getLogger(__name__)
 
 class Athena():
     def __init__(self, metadata):
-        try:
-            self.days_back = metadata['days_back']
-        except KeyError:
-            self.days_back = 30
         self.metadata = metadata
         self.accounts = self.metadata['accounts_to_partition']
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
@@ -42,10 +37,6 @@ class Athena():
 
     def set_up_table_and_patitions(self):
         logger.info("Setting up Athena table.")
-        if 'years_to_partition' in self.metadata:
-            years = self.metadata['years_to_partition']
-        else:
-            years = [datetime.now().year]
         query_string, path = athena_query_strings.create_table(
             self.cloudtrail_bucket)
         self.start_query_execution(query_string, path)
