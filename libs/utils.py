@@ -14,6 +14,6 @@ class Boto():
         return cloudtrail_regions
 
     def get_account(self):
-        self.stsclient = self.session.client('sts')
-        account = self.stsclient.get_caller_identity()['account']
+        self.stsclient = boto3.client('sts')
+        account = self.stsclient.get_caller_identity()['Account']
         return account

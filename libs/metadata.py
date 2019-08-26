@@ -19,7 +19,7 @@ def read(filename):
         metadata = yaml.load(meta.read())
 
     validate_metadata(metadata)
-    metadata = set_defaults()
+    metadata = set_defaults(metadata)
 
     return metadata
 
@@ -50,8 +50,9 @@ def set_defaults(metadata):
         metadata['days_back'] = 30
     if 'regions_to_partition' not in metadata:
         logger.info("Setting 'regions_to_partition' to all supported CloudTrail regions.")
-        metadata['regions'] = boto.get_cloudtrail_regions()
+        metadata['regions_to_partition'] = boto.get_cloudtrail_regions()
     if 'accounts_to_partition' not in metadata:
-        local_account = boto.get_account
+        local_account = boto.get_account()
         logger.info(f"Setting 'accounts_to_partition' to {local_account}")
-        metadata['accounts_to_partition'] = []
+        metadata['accounts_to_partition'] = [local_account]
+    return metadata

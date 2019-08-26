@@ -8,8 +8,10 @@ logger = logging.getLogger(__name__)
 class Athena():
     def __init__(self, metadata):
         self.metadata = metadata
-        self.accounts = self.metadata['accounts_to_partition']
+        self.accounts = metadata['accounts_to_partition']
+        self.days_back = metadata['days_back']
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
+        self.years = metadata['years_to_partition']
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
         self.create_client()
@@ -42,7 +44,7 @@ class Athena():
         self.start_query_execution(query_string, path)
         for account in self.metadata['accounts_to_partition']:
             for region in self.metadata['regions_to_partition']:
-                for year in years:
+                for year in self.years:
                     logger.info(f"Adding partition to Athena table: {account} | {region} | {year}")
                     query_string, path = athena_query_strings.add_to_partition(
                         cloudtrail_bucket=self.cloudtrail_bucket,
