@@ -1,4 +1,3 @@
-# from utils import Boto
 from . import utils
 from datetime import datetime
 import os
@@ -10,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def read(filename):
+    """ Reads metadata file.  Returns dict after performing validation and setting defaults. """
     logger.info(f"Reading {filename} from metadata folder.")
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
@@ -40,6 +40,7 @@ def validate_metadata(metadata):
 
 
 def set_defaults(metadata):
+    """ Sets defaults for non-required values if they are not specified in the metadata file. """
     boto = utils.Boto(metadata)
     if 'years_to_partition' not in metadata:
         current_year = datetime.now().year

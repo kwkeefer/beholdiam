@@ -1,12 +1,14 @@
 ---
 region: us-west-2
 cloudtrail_bucket: cloudtrail_bucket_012345678910
-# behold_bucket: behold_bucket_012345678910
+behold_bucket: behold_bucket_012345678910
 regions_to_partition:
   - us-west-2
   - us-east-1
 accounts_to_partition:
-  - 012345678910
+  - 123456789101
+  - 987654321091
 years_to_partition:
   - 2019
-days_back: 90
+  - 2018
+days_back: 365

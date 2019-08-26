@@ -6,7 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 class Athena():
+    """ Class for interacting with Athena service in AWS. """
     def __init__(self, metadata):
+        """ Sets required variables.  Creates Athena boto3 client. """
         self.metadata = metadata
         self.accounts = metadata['accounts_to_partition']
         self.days_back = metadata['days_back']
@@ -17,15 +19,19 @@ class Athena():
         self.create_client()
 
     def active_resources(self):
+        """ Creates list objects which are used to store location to Athena output files.
+        Executes Athena queries to determine which roles and users have been used since days_back. """
         self.active_roles_output_files = []
         self.active_users_output_files = []
         self.active_roles_query()
         self.active_users_query()
 
     def create_client(self):
+        """ Creates Athena boto3 client. """
         self.client = boto3.client('athena', region_name=self.region)
 
     def start_query_execution(self, query_string, path):
+        """ Takes Athena query string and output path and executes the query. """
         response = self.client.start_query_execution(
             QueryString=query_string,
             ResultConfiguration={
@@ -38,6 +44,7 @@ class Athena():
             logger.error(f"Response failed:\n{response}")
 
     def set_up_table_and_patitions(self):
+        """ Sets up partitions to be used in Athena table. """
         logger.info("Setting up Athena table.")
         query_string, path = athena_query_strings.create_table(
             self.cloudtrail_bucket)
@@ -55,6 +62,8 @@ class Athena():
                     self.start_query_execution(query_string, path)
 
     def active_roles_query(self):
+        """ Runs query to determine which roles have been used since days_back.
+        Stores the path to Athena output file in active_roles_output_files list. """
         for account in self.accounts:
             logger.info(f"Querying Athena for active roles in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_roles(
@@ -69,6 +78,8 @@ class Athena():
             self.active_roles_output_files.append(output_dict)
 
     def active_users_query(self):
+        """ Runs query to determine which users have been used since days_back.
+        Stores the path to Athena output file in active_users_output_files list. """
         for account in self.accounts:
             logger.info(f"Querying Athena for active users in {account} (past {self.days_back} days).")
             query_string, path = athena_query_strings.active_users(
@@ -83,6 +94,8 @@ class Athena():
             self.active_users_output_files.append(output_dict)
 
     def services_by_role_query(self, account, list_of_arns):
+        """ Runs query to determine which services / actions have been used by a role.
+        Stores the path to Athena output file in services_by_role_output_files list. """
         logger.info(f"Querying Athena for services used by role in {account}.")
         self.services_by_role_output_files = []
         for role_arn in list_of_arns:
@@ -103,6 +116,8 @@ class Athena():
             self.services_by_role_output_files.append(output_dict)
 
     def services_by_user_query(self, account, list_of_arns):
+        """ Runs query to determine which services / actions have been used by a role.
+        Stores the path to Athena output file in services_by_role_output_files list. """
         logger.info(f"Querying Athena for services used by user in {account}")
         self.services_by_user_output_files = []
         for user_arn in list_of_arns:

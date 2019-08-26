@@ -30,6 +30,8 @@ athena = Athena(meta)
 csv = CSVParser()
 policygen = PolicyGenerator()
 
+# If --setup flag is passed, the Athena table and partition tables are set up.
+# Only needs to be done once unless metadata is updated to add more accounts, regions, or years.
 if args.setup:
     athena.set_up_table_and_patitions()
 
@@ -37,6 +39,7 @@ athena.active_resources()
 
 
 def get_arns_from_athena_output(users_or_roles):
+    """ Function to get list of arns of active users or roles. """
     if users_or_roles == "users":
         athena_output_files = athena.active_users_output_files
         services_by_query = athena.services_by_user_query
@@ -54,6 +57,7 @@ def get_arns_from_athena_output(users_or_roles):
 
 
 def build_behold_output_files(users_or_roles):
+    """ Builds list of services/actions and IAM policy for each role or user. """
     if users_or_roles == "users":
         athena_services_by_output_files = athena.services_by_user_output_files
     elif users_or_roles == "roles":
