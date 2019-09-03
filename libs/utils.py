@@ -1,4 +1,15 @@
 import boto3
+import datetime
+
+
+def year_month_parser(days_back=30):
+    """ Calculates a list of tuples formatted in (year, month) given days_back """
+    year_month = set()
+    for x in range(days_back):
+        date = datetime.datetime.today() - datetime.timedelta(days=x)
+        year_month_tuple = date.strftime("%Y"), date.strftime("%m")
+        year_month.add(year_month_tuple)
+    return list(year_month)
 
 
 class Boto():

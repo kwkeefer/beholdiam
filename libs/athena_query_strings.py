@@ -48,7 +48,7 @@ def create_table(bucketname):
             sharedeventid STRING,
             vpcendpointid STRING
             )
-            PARTITIONED BY (account string, region string, year string)
+            PARTITIONED BY (account string, region string, year string, month string)
             ROW FORMAT SERDE 'com.amazon.emr.hive.serde.CloudTrailSerde'
             STORED AS INPUTFORMAT 'com.amazon.emr.cloudtrail.CloudTrailInputFormat'
             OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
@@ -57,12 +57,12 @@ def create_table(bucketname):
     return (query_string, "setup/create_table")
 
 
-def add_to_partition(cloudtrail_bucket, account, region, year):
+def add_to_partition(cloudtrail_bucket, account, region, year, month):
     """ Returns query for adding partition to behold Athena table. """
     query_string = f"""ALTER TABLE behold
-        ADD PARTITION (account='{account}', region='{region}', year='{year}')
-        LOCATION 's3://{cloudtrail_bucket}/AWSLogs/{account}/CloudTrail/{region}/{year}/';"""
-    return (query_string, f"setup/add_to_partition/{account}-{region}-{year}")
+        ADD PARTITION (account='{account}', region='{region}', year='{year}', month='{month}')
+        LOCATION 's3://{cloudtrail_bucket}/AWSLogs/{account}/CloudTrail/{region}/{year}/{month}/';"""
+    return (query_string, f"setup/add_to_partition/{account}-{region}-{year}-{month}")
 
 
 def active_roles(account, days_back):
