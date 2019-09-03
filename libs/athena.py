@@ -1,6 +1,7 @@
 import boto3
 import logging
 from . import athena_query_strings
+from . import s3
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ class Athena():
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
+        self.s3 = s3.S3(metadata, session)
         self.create_client(session)
 
     def active_resources(self):
@@ -81,6 +83,10 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.active_roles_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
 
     def active_users_query(self):
         """ Runs query to determine which users have been used since days_back.
@@ -97,6 +103,10 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.active_users_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
 
     def services_by_role_query(self, account, list_of_arns):
         """ Runs query to determine which services / actions have been used by a role.
@@ -119,6 +129,10 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_role_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
 
     def services_by_user_query(self, account, list_of_arns):
         """ Runs query to determine which services / actions have been used by a role.
@@ -141,3 +155,7 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_user_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
