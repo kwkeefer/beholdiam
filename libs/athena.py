@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class Athena():
     """ Class for interacting with Athena service in AWS. """
-    def __init__(self, metadata):
+    def __init__(self, metadata, session=None):
         """ Sets required variables.  Creates Athena boto3 client. """
         self.metadata = metadata
         self.accounts = metadata['accounts_to_partition']
@@ -16,7 +16,7 @@ class Athena():
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
-        self.create_client()
+        self.create_client(session)
 
     def active_resources(self):
         """ Creates list objects which are used to store location to Athena output files.
@@ -26,9 +26,12 @@ class Athena():
         self.active_roles_query()
         self.active_users_query()
 
-    def create_client(self):
+    def create_client(self, session):
         """ Creates Athena boto3 client. """
-        self.client = boto3.client('athena', region_name=self.region)
+        if session is None:
+            self.client = boto3.client('athena', region_name=self.region)
+        else:
+            self.client = session.client('athena')
 
     def start_query_execution(self, query_string, path):
         """ Takes Athena query string and output path and executes the query. """
