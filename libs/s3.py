@@ -11,6 +11,7 @@ class S3():
     def __init__(self, metadata, session=None):
         """ Sets region and creates boto3 client. """
         self.region = metadata['region']
+        self.metadata = metadata
         self.create_client(session)
 
     def create_client(self, session):
