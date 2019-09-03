@@ -1,6 +1,7 @@
 import boto3
 import logging
 from . import athena_query_strings
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,6 @@ class Athena():
         self.accounts = metadata['accounts_to_partition']
         self.days_back = metadata['days_back']
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
-        self.years = metadata['years_to_partition']
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
         self.create_client()
@@ -49,15 +49,17 @@ class Athena():
         query_string, path = athena_query_strings.create_table(
             self.cloudtrail_bucket)
         self.start_query_execution(query_string, path)
+        years_months_list = utils.year_month_parser(days_back=self.days_back)
         for account in self.metadata['accounts_to_partition']:
             for region in self.metadata['regions_to_partition']:
-                for year in self.years:
-                    logger.info(f"Adding partition to Athena table: {account} | {region} | {year}")
+                for year, month in years_months_list:
+                    logger.info(f"Adding partition to Athena table: {account} | {region} | {year} | {month}")
                     query_string, path = athena_query_strings.add_to_partition(
                         cloudtrail_bucket=self.cloudtrail_bucket,
                         account=account,
                         region=region,
-                        year=year
+                        year=year,
+                        month=month
                     )
                     self.start_query_execution(query_string, path)
 

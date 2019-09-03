@@ -8,7 +8,4 @@ regions_to_partition:
 accounts_to_partition:
   - 123456789101
   - 987654321091
-years_to_partition:
-  - 2019
-  - 2018
 days_back: 365
