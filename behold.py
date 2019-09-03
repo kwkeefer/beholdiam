@@ -28,7 +28,7 @@ logger = logging.getLogger("main")
 # Reading metadata, performing metadata validation, initializing required classes.
 meta = metadata.read(args.metadata)
 boto = utils.Boto(meta)
-meta = metadata.set_defaults(meta)
+meta = metadata.set_defaults(meta, boto)
 s3 = S3(meta, boto.session)
 athena = Athena(meta, boto.session)
 csv = CSVParser()
