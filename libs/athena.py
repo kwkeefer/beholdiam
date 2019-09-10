@@ -114,7 +114,9 @@ class Athena():
         logger.info(f"Querying Athena for services used by role in {account}.")
         self.services_by_role_output_files = []
         for role_arn in list_of_arns:
-            role_name = role_arn.split('/')[1]
+            role_name = role_arn.split('/')
+            role_name = role_name[len(role_name) - 1]
+            logger.info(f"Querying by role: {role_name}")
             query_string, path = athena_query_strings.services_by_role(
                 account=account,
                 days_back=self.days_back,
@@ -141,6 +143,7 @@ class Athena():
         self.services_by_user_output_files = []
         for user_arn in list_of_arns:
             user_name = user_arn.split('/')[1]
+            logger.info(f"Querying by user: {user_name}")
             query_string, path = athena_query_strings.services_by_user(
                 account=account,
                 user_arn=user_arn,
