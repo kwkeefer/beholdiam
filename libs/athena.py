@@ -1,6 +1,7 @@
 import boto3
 import logging
 from . import athena_query_strings
+from . import s3
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Athena():
     """ Class for interacting with Athena service in AWS. """
-    def __init__(self, metadata):
+    def __init__(self, metadata, session=None):
         """ Sets required variables.  Creates Athena boto3 client. """
         self.metadata = metadata
         self.accounts = metadata['accounts_to_partition']
@@ -16,7 +17,8 @@ class Athena():
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
-        self.create_client()
+        self.s3 = s3.S3(metadata, session)
+        self.create_client(session)
 
     def active_resources(self):
         """ Creates list objects which are used to store location to Athena output files.
@@ -26,9 +28,12 @@ class Athena():
         self.active_roles_query()
         self.active_users_query()
 
-    def create_client(self):
+    def create_client(self, session):
         """ Creates Athena boto3 client. """
-        self.client = boto3.client('athena', region_name=self.region)
+        if session is None:
+            self.client = boto3.client('athena', region_name=self.region)
+        else:
+            self.client = session.client('athena')
 
     def start_query_execution(self, query_string, path):
         """ Takes Athena query string and output path and executes the query. """
@@ -78,6 +83,10 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.active_roles_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
 
     def active_users_query(self):
         """ Runs query to determine which users have been used since days_back.
@@ -94,6 +103,10 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.active_users_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
 
     def services_by_role_query(self, account, list_of_arns):
         """ Runs query to determine which services / actions have been used by a role.
@@ -101,7 +114,9 @@ class Athena():
         logger.info(f"Querying Athena for services used by role in {account}.")
         self.services_by_role_output_files = []
         for role_arn in list_of_arns:
-            role_name = role_arn.split('/')[1]
+            role_name = role_arn.split('/')
+            role_name = role_name[len(role_name) - 1]
+            logger.info(f"Querying by role: {role_name}")
             query_string, path = athena_query_strings.services_by_role(
                 account=account,
                 days_back=self.days_back,
@@ -116,6 +131,10 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_role_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )
 
     def services_by_user_query(self, account, list_of_arns):
         """ Runs query to determine which services / actions have been used by a role.
@@ -124,6 +143,7 @@ class Athena():
         self.services_by_user_output_files = []
         for user_arn in list_of_arns:
             user_name = user_arn.split('/')[1]
+            logger.info(f"Querying by user: {user_name}")
             query_string, path = athena_query_strings.services_by_user(
                 account=account,
                 user_arn=user_arn,
@@ -138,3 +158,7 @@ class Athena():
                 "path": f"{path}/{execution_id}.csv"
             }
             self.services_by_user_output_files.append(output_dict)
+            self.s3.check_object_exists(
+                bucket=self.behold_bucket,
+                key=f"{path}/{execution_id}.csv"
+            )

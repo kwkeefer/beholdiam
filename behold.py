@@ -1,4 +1,5 @@
 from libs import metadata
+from libs import utils
 from libs.athena import Athena
 from libs.s3 import S3
 from libs.csv_parser import CSVParser
@@ -24,9 +25,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("main")
 
+# Reading metadata, performing metadata validation, initializing required classes.
 meta = metadata.read(args.metadata)
-s3 = S3(meta)
-athena = Athena(meta)
+boto = utils.Boto(meta)
+meta = metadata.set_defaults(meta, boto)
+s3 = S3(meta, boto.session)
+athena = Athena(meta, boto.session)
 csv = CSVParser()
 policygen = PolicyGenerator()
 

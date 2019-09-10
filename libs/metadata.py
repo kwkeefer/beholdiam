@@ -19,7 +19,6 @@ def read(filename):
         metadata = yaml.load(meta.read())
 
     validate_metadata(metadata)
-    metadata = set_defaults(metadata)
 
     return metadata
 
@@ -39,9 +38,10 @@ def validate_metadata(metadata):
                  "'behold_bucket' should be in the same region as your CloudTrail bucket.")
 
 
-def set_defaults(metadata):
+def set_defaults(metadata, boto=None):
     """ Sets defaults for non-required values if they are not specified in the metadata file. """
-    boto = utils.Boto(metadata)
+    if boto is None:
+        boto = utils.Boto(metadata)
     if 'years_to_partition' not in metadata:
         current_year = datetime.now().year
         logger.info(f"Setting 'years_to_partition' to {current_year}")
