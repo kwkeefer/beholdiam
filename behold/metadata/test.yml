@@ -1,0 +1,10 @@
+---
+region: us-west-2
+cloudtrail_bucket: cloudtrail-keefer
+behold_bucket: athena-output-keefer
+regions_to_partition:
+  - us-west-2
+  - us-east-1
+accounts_to_partition:
+  - 032193469888
+# days_back: 31
