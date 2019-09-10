@@ -8,13 +8,74 @@ import argparse
 import logging
 
 
-def main():
+def arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("metadata")
     parser.add_argument("--setup", action="store_true")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
+    return args
 
+
+def initialize_classes(args):
+    """ Reading metadata, performing metadata validation, initializing required classes.
+    Classes / metadata stored in initc dictionary. """
+    initc = {}
+    meta = metadata.read(args.metadata)
+    initc['boto'] = utils.Boto(meta)
+    initc['meta'] = metadata.set_defaults(meta, initc['boto'])
+    initc['s3'] = S3(initc['meta'], initc['boto'].session)
+    initc['athena'] = Athena(initc['meta'], initc['boto'].session)
+    initc['csv'] = CSVParser()
+    initc['policygen'] = PolicyGenerator()
+    return initc
+
+
+def get_arns_from_athena_output(users_or_roles, initc):
+    """ Function to get list of arns of active users or roles. """
+    if users_or_roles == "users":
+        athena_output_files = initc['athena'].active_users_output_files
+        services_by_query = initc['athena'].services_by_user_query
+    elif users_or_roles == "roles":
+        athena_output_files = initc['athena'].active_roles_output_files
+        services_by_query = initc['athena'].services_by_role_query
+
+    for dictionary in athena_output_files:
+        obj = initc['s3'].get_object(initc['meta']["behold_bucket"], dictionary["path"])
+        list_of_arns = initc['csv'].single_column_csv_to_list(obj)
+        services_by_query(
+            account=dictionary["account"],
+            list_of_arns=list_of_arns
+        )
+
+
+def build_behold_output_files(users_or_roles, initc):
+    """ Builds list of services/actions and IAM policy for each role or user. """
+    if users_or_roles == "users":
+        athena_services_by_output_files = initc['athena'].services_by_user_output_files
+    elif users_or_roles == "roles":
+        athena_services_by_output_files = initc['athena'].services_by_role_output_files
+
+    for dictionary in athena_services_by_output_files:
+        obj = initc['s3'].get_object(initc['meta']["behold_bucket"], dictionary["path"])
+        list_of_dicts = initc['csv'].csv_to_list_of_dicts(obj)
+        actions = initc['policygen'].generate_list_of_actions(list_of_dicts)
+        formatted_actions = initc['policygen'].format_actions(actions)
+        initc['s3'].put_object(
+            bucket=initc['meta']["behold_bucket"],
+            key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.txt",
+            encoded_object=formatted_actions.encode()
+        )
+        policy = initc['policygen'].build_policy(actions)
+        initc['s3'].put_object(
+            bucket=initc['meta']['behold_bucket'],
+            key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.json",
+            encoded_object=policy.encode()
+        )
+
+
+def main():
+    args = arguments()
     if args.debug:
         log_level = logging.DEBUG
     else:
@@ -25,69 +86,20 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
-    logger = logging.getLogger("main")
 
-    # Reading metadata, performing metadata validation, initializing required classes.
-    meta = metadata.read(args.metadata)
-    boto = utils.Boto(meta)
-    meta = metadata.set_defaults(meta, boto)
-    s3 = S3(meta, boto.session)
-    athena = Athena(meta, boto.session)
-    csv = CSVParser()
-    policygen = PolicyGenerator()
+    initc = initialize_classes(args)
 
     # If --setup flag is passed, the Athena table and partition tables are set up.
     # Only needs to be done once unless metadata is updated to add more accounts, regions, or years.
     if args.setup:
-        athena.set_up_table_and_patitions()
+        initc['athena'].set_up_table_and_patitions()
 
-    athena.active_resources()
+    initc['athena'].active_resources()
 
-    def get_arns_from_athena_output(users_or_roles):
-        """ Function to get list of arns of active users or roles. """
-        if users_or_roles == "users":
-            athena_output_files = athena.active_users_output_files
-            services_by_query = athena.services_by_user_query
-        elif users_or_roles == "roles":
-            athena_output_files = athena.active_roles_output_files
-            services_by_query = athena.services_by_role_query
-
-        for dictionary in athena_output_files:
-            obj = s3.get_object(meta["behold_bucket"], dictionary["path"])
-            list_of_arns = csv.single_column_csv_to_list(obj)
-            services_by_query(
-                account=dictionary["account"],
-                list_of_arns=list_of_arns
-            )
-
-    def build_behold_output_files(users_or_roles):
-        """ Builds list of services/actions and IAM policy for each role or user. """
-        if users_or_roles == "users":
-            athena_services_by_output_files = athena.services_by_user_output_files
-        elif users_or_roles == "roles":
-            athena_services_by_output_files = athena.services_by_role_output_files
-
-        for dictionary in athena_services_by_output_files:
-            obj = s3.get_object(meta["behold_bucket"], dictionary["path"])
-            list_of_dicts = csv.csv_to_list_of_dicts(obj)
-            actions = policygen.generate_list_of_actions(list_of_dicts)
-            formatted_actions = policygen.format_actions(actions)
-            s3.put_object(
-                bucket=meta["behold_bucket"],
-                key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.txt",
-                encoded_object=formatted_actions.encode()
-            )
-            policy = policygen.build_policy(actions)
-            s3.put_object(
-                bucket=meta['behold_bucket'],
-                key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.json",
-                encoded_object=policy.encode()
-            )
-
-    get_arns_from_athena_output("users")
-    get_arns_from_athena_output("roles")
-    build_behold_output_files("users")
-    build_behold_output_files("roles")
+    get_arns_from_athena_output("users", initc)
+    get_arns_from_athena_output("roles", initc)
+    build_behold_output_files("users", initc)
+    build_behold_output_files("roles", initc)
 
 
 if __name__ == '__main__':
