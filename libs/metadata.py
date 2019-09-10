@@ -11,9 +11,7 @@ logger = logging.getLogger(__name__)
 def read(filename):
     """ Reads metadata file.  Returns dict after performing validation and setting defaults. """
     logger.info(f"Reading {filename} from metadata folder.")
-    current_dir = os.path.dirname(__file__)
-    parent_dir = os.path.dirname(current_dir)
-    metadata = os.path.join(parent_dir, f"metadata/{filename}")
+    metadata = os.path.abspath(filename)
 
     with open(metadata, "r") as meta:
         metadata = yaml.load(meta.read())
