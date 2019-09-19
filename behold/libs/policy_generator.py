@@ -1,5 +1,6 @@
 import json
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -7,8 +8,15 @@ logger = logging.getLogger(__name__)
 class PolicyGenerator():
     """ Class for parsing actions used by service. """
     def __init__(self):
-        """ Nothing happens during init. """
-        pass
+        self.get_service_actions()
+
+    def get_service_actions(self):
+        self.actions = []
+        services = requests.get('https://awspolicygen.s3.amazonaws.com/js/policies.js').text.strip('app.PolicyEditorConfig=')
+        services = json.loads(services)['serviceMap']
+        for service in services:
+            for action in services[service]['Actions']:
+                self.actions.append(f"{services[service]['StringPrefix']}:{action}")
 
     def generate_list_of_actions(self, list_of_dicts):
         """ Generates a list of service:action to be used for creating IAM policies.
@@ -18,7 +26,15 @@ class PolicyGenerator():
         for dictionary in list_of_dicts:
             service = dictionary['eventsource'].split('.')[0]
             action = f"{service}:{dictionary['eventname']}"
-            actions.append(action)
+            if action in self.actions:
+                actions.append(action)
+            else:
+                logger.info(f"{action} not supported.")
+                for a in self.actions:
+                    if a.lower() in action.lower():
+                    # if a.split(':')[0].lower() in action.lower() and a.split(':')[1].lower() in action.lower():
+                        actions.append(a)
+                        logger.info(f"Adding {a} instead.")
         actions.sort()
         return actions
 
