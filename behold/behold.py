@@ -2,7 +2,7 @@ from libs import metadata
 from libs import utils
 from libs.athena import Athena
 from libs.s3 import S3
-from libs.csv_parser import CSVParser
+from libs.csv_parser import single_column_csv_to_list, csv_to_list_of_dicts
 from libs.policy_generator import PolicyGenerator
 import argparse
 import logging
@@ -26,7 +26,6 @@ def initialize_classes(args):
     initc['meta'] = metadata.set_defaults(meta, initc['boto'])
     initc['s3'] = S3(initc['meta'], initc['boto'].session)
     initc['athena'] = Athena(initc['meta'], initc['boto'].session)
-    initc['csv'] = CSVParser()
     initc['policygen'] = PolicyGenerator()
     return initc
 
@@ -42,7 +41,7 @@ def get_arns_from_athena_output(users_or_roles, initc):
 
     for dictionary in athena_output_files:
         obj = initc['s3'].get_object(initc['meta']["behold_bucket"], dictionary["path"])
-        list_of_arns = initc['csv'].single_column_csv_to_list(obj)
+        list_of_arns = single_column_csv_to_list(obj)
         services_by_query(
             account=dictionary["account"],
             list_of_arns=list_of_arns
@@ -58,20 +57,27 @@ def build_behold_output_files(users_or_roles, initc):
 
     for dictionary in athena_services_by_output_files:
         obj = initc['s3'].get_object(initc['meta']["behold_bucket"], dictionary["path"])
-        list_of_dicts = initc['csv'].csv_to_list_of_dicts(obj)
-        actions = initc['policygen'].generate_list_of_actions(list_of_dicts)
-        formatted_actions = initc['policygen'].format_actions(actions)
+        list_of_dicts = csv_to_list_of_dicts(obj)
+        path_to_output = f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}/{dictionary['name']}_"
+        supported_actions, unsupported_actions = initc['policygen'].generate_list_of_actions(list_of_dicts)
+        formatted_supported_actions = initc['policygen'].format_actions(supported_actions)
         initc['s3'].put_object(
             bucket=initc['meta']["behold_bucket"],
-            key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.txt",
-            encoded_object=formatted_actions.encode()
+            key=path_to_output + "iam_actions.txt",
+            encoded_object=formatted_supported_actions.encode()
         )
-        policy = initc['policygen'].build_policy(actions)
+        policy = initc['policygen'].build_policy(supported_actions)
         initc['s3'].put_object(
             bucket=initc['meta']['behold_bucket'],
-            key=f"behold_results/{dictionary['account']}/{users_or_roles}/{dictionary['name']}.json",
+            key=path_to_output + "iam_policy.json",
             encoded_object=policy.encode()
         )
+        if unsupported_actions:
+            initc['s3'].put_object(
+                bucket=initc['meta']['behold_bucket'],
+                key=path_to_output + "unsupported_actions.txt",
+                encoded_object="\n".join(unsupported_actions).encode()
+            )
 
 
 def main():
@@ -92,7 +98,7 @@ def main():
     # If --setup flag is passed, the Athena table and partition tables are set up.
     # Only needs to be done once unless metadata is updated to add more accounts, regions, or years.
     if args.setup:
-        initc['athena'].set_up_table_and_patitions()
+        initc['athena'].set_up_table_and_partitions()
 
     initc['athena'].active_resources()
 
