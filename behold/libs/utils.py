@@ -15,10 +15,6 @@ def year_month_parser(days_back=30):
 class Boto():
     def __init__(self, metadata):
         self.region = metadata['region']
-        self.create_session()
-
-    def create_session(self):
-        """ Creates boto3 session. """
         self.session = boto3.session.Session(region_name=self.region)
 
     def get_cloudtrail_regions(self):
