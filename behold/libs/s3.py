@@ -12,10 +12,6 @@ class S3():
         """ Sets region and creates boto3 client. """
         self.region = metadata['region']
         self.metadata = metadata
-        self.create_client(session)
-
-    def create_client(self, session):
-        """ Creates boto3 client as self.client. """
         if session is None:
             self.client = boto3.client('s3', region_name=self.region)
         else:

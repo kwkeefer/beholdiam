@@ -48,7 +48,7 @@ class Athena():
         else:
             logger.error(f"Response failed:\n{response}")
 
-    def set_up_table_and_patitions(self):
+    def set_up_table_and_partitions(self):
         """ Sets up partitions to be used in Athena table. """
         logger.info("Setting up Athena table.")
         query_string, path = athena_query_strings.create_table(
