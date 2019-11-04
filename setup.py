@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='beholdiam',
-      version='1.0.3',
+      version='1.0.4',
       description='Behold uses Athena and CloudTrail to audit your IAM resources and generate policy recommendations.',
       url='https://github.com/kwkeefer/behold',
       author='Kyle Keefer',
