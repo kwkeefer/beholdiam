@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "beholdiamathena",
+      "Effect": "Allow",
+      "Action": [
+        "athena:StartQueryExecution",
+        "glue:GetPartitions",
+        "glue:GetTable"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "beholdiams3",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:GetObject",
+        "s3:HeadObject",
+        "s3:PutObject"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
