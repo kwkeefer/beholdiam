@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(name='beholdiam',
-      version='1.0.6',
-      description='Behold uses Athena and CloudTrail to audit your IAM resources and generate policy recommendations.',
-      url='https://github.com/kwkeefer/behold',
+      version='2.0.0',
+      description='beholdiam uses Athena and CloudTrail to audit your IAM resources and generate policy recommendations.',
+      url='https://github.com/kwkeefer/beholdiam',
       author='Kyle Keefer',
       author_email='kyle.keefer@protonmail.com',
       license='MIT',
@@ -15,7 +15,7 @@ setup(name='beholdiam',
       ],
       entry_points={
           'console_scripts': [
-              'behold=behold.behold:main'
+              'beholdiam=beholdiam.beholdiam:main'
           ]
       },
       zip_safe=False)
