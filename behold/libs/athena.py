@@ -18,7 +18,10 @@ class Athena():
         self.behold_bucket = metadata['behold_bucket']
         self.region = metadata['region']
         self.s3 = s3.S3(metadata, session)
-        self.create_client(session)
+        if session is None:
+            self.client = boto3.client('athena', region_name=self.region)
+        else:
+            self.client = session.client('athena')
 
     def active_resources(self):
         """ Creates list objects which are used to store location to Athena output files.
@@ -27,13 +30,6 @@ class Athena():
         self.active_users_output_files = []
         self.active_roles_query()
         self.active_users_query()
-
-    def create_client(self, session):
-        """ Creates Athena boto3 client. """
-        if session is None:
-            self.client = boto3.client('athena', region_name=self.region)
-        else:
-            self.client = session.client('athena')
 
     def start_query_execution(self, query_string, path):
         """ Takes Athena query string and output path and executes the query. """
