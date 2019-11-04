@@ -1,11 +1,11 @@
 ---
-region: us-west-2
-cloudtrail_bucket: cloudtrail_bucket_012345678910
-beholdiam_bucket: beholdiam_bucket_012345678910
-regions_to_partition:
+region: us-west-2  # The region your athena table will be created in (should be the same region as your CloudTrail bucket).
+cloudtrail_bucket: cloudtrail_bucket_012345678910  # The name of your CloudTrail bucket.
+beholdiam_bucket: beholdiam_bucket_012345678910  # A bucket to store output files for beholdiam.
+regions_to_partition:  # Queries CloudTrail logs for specific regions.  Comment this out to query all regions.
   - us-west-2
   - us-east-1
-accounts_to_partition:
+accounts_to_partition:  # Queries CloudTrail logs for specific accounts.  Comment this out to query the local account.
   - 123456789101
   - 987654321091
-days_back: 365
+days_back: 365  # How many days back to query CloudTrail logs.
