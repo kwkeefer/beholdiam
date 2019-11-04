@@ -54,7 +54,7 @@ class PolicyGenerator():
             "Version": "2012-10-17",
             "Statement": [
                 {
-                    "Sid": "behold",
+                    "Sid": "beholdiam",
                     "Effect": "Allow",
                     "Action": list_of_actions,
                     "Resource": "*"

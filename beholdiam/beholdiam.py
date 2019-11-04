@@ -40,7 +40,7 @@ def get_arns_from_athena_output(users_or_roles, initc):
         services_by_query = initc['athena'].services_by_role_query
 
     for dictionary in athena_output_files:
-        obj = initc['s3'].get_object(initc['meta']["behold_bucket"], dictionary["path"])
+        obj = initc['s3'].get_object(initc['meta']["beholdiam_bucket"], dictionary["path"])
         list_of_arns = single_column_csv_to_list(obj)
         initc['s3'].put_object(
             bucket=initc['meta']['behold_bucket'],

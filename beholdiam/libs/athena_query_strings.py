@@ -2,8 +2,8 @@
 
 
 def create_table(bucketname):
-    """ Returns query for behold table in Athena. """
-    query_string = f"""CREATE EXTERNAL TABLE behold (
+    """ Returns query for beholdiam table in Athena. """
+    query_string = f"""CREATE EXTERNAL TABLE beholdiam (
             eventversion STRING,
             useridentity STRUCT<
                         type:STRING,
@@ -58,8 +58,8 @@ def create_table(bucketname):
 
 
 def add_to_partition(cloudtrail_bucket, account, region, year, month):
-    """ Returns query for adding partition to behold Athena table. """
-    query_string = f"""ALTER TABLE behold
+    """ Returns query for adding partition to beholdiam Athena table. """
+    query_string = f"""ALTER TABLE beholdiam
         ADD PARTITION (account='{account}', region='{region}', year='{year}', month='{month}')
         LOCATION 's3://{cloudtrail_bucket}/AWSLogs/{account}/CloudTrail/{region}/{year}/{month}/';"""
     return (query_string, f"setup/add_to_partition/{account}-{region}-{year}-{month}")
@@ -68,7 +68,7 @@ def add_to_partition(cloudtrail_bucket, account, region, year, month):
 def active_roles(account, days_back):
     """ Returns query for finding active roles (since days_back value). """
     query_string = f"""SELECT DISTINCT useridentity.sessioncontext.sessionissuer.arn
-        FROM behold
+        FROM beholdiam
         WHERE account = '{account}'
         AND useridentity.type = 'AssumedRole'
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now());"""
@@ -78,7 +78,7 @@ def active_roles(account, days_back):
 def active_users(account, days_back):
     """ Returns query for finding active users (since days_back value)."""
     query_string = f"""SELECT DISTINCT useridentity.arn
-        FROM behold
+        FROM beholdiam
         WHERE account = '{account}'
         AND useridentity.type = 'IAMUser'
         AND useridentity.arn IS NOT NULL
@@ -88,7 +88,7 @@ def active_users(account, days_back):
 
 def services_by_role(account, days_back, role_arn, role_name):
     """ Returns query for eventsource (service) / actions performed by role. """
-    query_string = f"""SELECT DISTINCT eventsource, eventname FROM behold
+    query_string = f"""SELECT DISTINCT eventsource, eventname FROM beholdiam
         WHERE account = '{account}'
         AND (useridentity.sessioncontext.sessionissuer.arn = '{role_arn}')
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())
@@ -98,7 +98,7 @@ def services_by_role(account, days_back, role_arn, role_name):
 
 def services_by_user(account, days_back, user_arn, user_name):
     """ Returns query for eventsource (service) / actions performed by user. """
-    query_string = f"""SELECT DISTINCT eventsource, eventname FROM behold
+    query_string = f"""SELECT DISTINCT eventsource, eventname FROM beholdiam
         WHERE account = '{account}'
         AND (useridentity.arn = '{user_arn}')
         AND from_iso8601_timestamp(eventtime) > date_add('day', -{days_back}, now())

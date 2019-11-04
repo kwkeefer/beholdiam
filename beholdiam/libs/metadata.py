@@ -30,10 +30,10 @@ def validate_metadata(metadata):
     elif 'cloudtrail_bucket' not in metadata:
         sys.exit("'cloudtrail_bucket' must be included in metadata file.\n" +
                  "'cloudtrail_bucket' specifies the name of your CloudTrail bucket.")
-    elif 'behold_bucket' not in metadata:
-        sys.exit("'behold_bucket' must be included in metadata file.\n" +
-                 "'behold_bucket' specifies the bucket that behold will store its output files.\n" +
-                 "'behold_bucket' should be in the same region as your CloudTrail bucket.")
+    elif 'beholdiam_bucket' not in metadata:
+        sys.exit("'beholdiam_bucket' must be included in metadata file.\n" +
+                 "'beholdiam_bucket' specifies the bucket that behold will store its output files.\n" +
+                 "'beholdiam_bucket' should be in the same region as your CloudTrail bucket.")
 
 
 def set_defaults(metadata, boto=None):

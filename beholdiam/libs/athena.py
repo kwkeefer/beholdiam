@@ -15,7 +15,7 @@ class Athena():
         self.accounts = metadata['accounts_to_partition']
         self.days_back = metadata['days_back']
         self.cloudtrail_bucket = metadata['cloudtrail_bucket']
-        self.behold_bucket = metadata['behold_bucket']
+        self.beholdiam_bucket = metadata['beholdiam_bucket']
         self.region = metadata['region']
         self.s3 = s3.S3(metadata, session)
         if session is None:
@@ -36,7 +36,7 @@ class Athena():
         response = self.client.start_query_execution(
             QueryString=query_string,
             ResultConfiguration={
-                "OutputLocation": f"s3://{self.behold_bucket}/{path}"
+                "OutputLocation": f"s3://{self.beholdiam_bucket}/{path}"
             }
         )
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
@@ -80,7 +80,7 @@ class Athena():
             }
             self.active_roles_output_files.append(output_dict)
             self.s3.check_object_exists(
-                bucket=self.behold_bucket,
+                bucket=self.beholdiam_bucket,
                 key=f"{path}/{execution_id}.csv"
             )
 
@@ -100,7 +100,7 @@ class Athena():
             }
             self.active_users_output_files.append(output_dict)
             self.s3.check_object_exists(
-                bucket=self.behold_bucket,
+                bucket=self.beholdiam_bucket,
                 key=f"{path}/{execution_id}.csv"
             )
 
@@ -128,7 +128,7 @@ class Athena():
             }
             self.services_by_role_output_files.append(output_dict)
             self.s3.check_object_exists(
-                bucket=self.behold_bucket,
+                bucket=self.beholdiam_bucket,
                 key=f"{path}/{execution_id}.csv"
             )
 
@@ -155,6 +155,6 @@ class Athena():
             }
             self.services_by_user_output_files.append(output_dict)
             self.s3.check_object_exists(
-                bucket=self.behold_bucket,
+                bucket=self.beholdiam_bucket,
                 key=f"{path}/{execution_id}.csv"
             )
