@@ -1,9 +1,9 @@
-from libs import metadata
-from libs import utils
-from libs.athena import Athena
-from libs.s3 import S3
-from libs.csv_parser import single_column_csv_to_list, csv_to_list_of_dicts
-from libs.policy_generator import PolicyGenerator
+from .libs import metadata
+from .libs import utils
+from .libs.athena import Athena
+from .libs.s3 import S3
+from .libs.csv_parser import single_column_csv_to_list, csv_to_list_of_dicts
+from .libs.policy_generator import PolicyGenerator
 import argparse
 import logging
 
