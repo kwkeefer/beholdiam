@@ -42,6 +42,12 @@ def get_arns_from_athena_output(users_or_roles, initc):
     for dictionary in athena_output_files:
         obj = initc['s3'].get_object(initc['meta']["behold_bucket"], dictionary["path"])
         list_of_arns = single_column_csv_to_list(obj)
+        initc['s3'].put_object(
+            bucket=initc['meta']['behold_bucket'],
+            key=f"behold_results/{dictionary['account']}/{users_or_roles}/active_{users_or_roles}_in"
+                f"_last_{initc['meta']['days_back']}_days.txt",
+            encoded_object="\n".join(list_of_arns).encode()
+        )
         services_by_query(
             account=dictionary["account"],
             list_of_arns=list_of_arns
