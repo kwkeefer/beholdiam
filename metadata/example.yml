@@ -1,7 +1,7 @@
 ---
 region: us-west-2
 cloudtrail_bucket: cloudtrail_bucket_012345678910
-behold_bucket: behold_bucket_012345678910
+beholdiam_bucket: beholdiam_bucket_012345678910
 regions_to_partition:
   - us-west-2
   - us-east-1
